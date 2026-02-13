@@ -49,11 +49,22 @@ public class TerminalBuffer {
     }
 
     public void setCursorPosition(int col, int row) {
-        // TODO: Implement bounds checking
+        int newCol = Math.max(0, Math.min(col, width - 1));
+        int newRow = Math.max(0, Math.min(row, height - 1));
+        this.cursorCol = newCol;
+        this.cursorRow = newRow;
     }
 
     public void moveCursor(Direction direction, int n) {
-        // TODO: Implement bounds-checked movement
+        int newCol = cursorCol;
+        int newRow = cursorRow;
+        switch (direction) {
+            case UP -> newRow -= n;
+            case DOWN -> newRow += n;
+            case LEFT -> newCol -= n;
+            case RIGHT -> newCol += n;
+        }
+        setCursorPosition(newCol, newRow);
     }
 
     // --- EDITING ---
