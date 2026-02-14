@@ -21,7 +21,7 @@ class TerminalBufferCursorTest {
     @Test
     void testMoveUpClampsToTop() {
         // place cursor a few rows down, attempt to move past top
-        buffer.setCursorPosition(10, 5);
+        buffer.setCursorPosition(5, 10);
         buffer.moveCursor(Direction.UP, 10); // would go to -5, should clamp to 0
         assertEquals(0, buffer.getCursorRow());
         assertEquals(10, buffer.getCursorCol()); // col unchanged
@@ -29,7 +29,7 @@ class TerminalBufferCursorTest {
 
     @Test
     void testMoveLeftClampsToZero() {
-        buffer.setCursorPosition(5, 10);
+        buffer.setCursorPosition(10, 5);
         buffer.moveCursor(Direction.LEFT, 10); // would go to -5, should clamp to 0
         assertEquals(0, buffer.getCursorCol());
         assertEquals(10, buffer.getCursorRow()); // row unchanged
@@ -37,7 +37,7 @@ class TerminalBufferCursorTest {
 
     @Test
     void testMoveRightClampsToWidthMinusOne() {
-        buffer.setCursorPosition(70, 10);
+        buffer.setCursorPosition(10, 70);
         buffer.moveCursor(Direction.RIGHT, 20); // would go beyond width, should clamp to WIDTH-1
         assertEquals(WIDTH - 1, buffer.getCursorCol());
         assertEquals(10, buffer.getCursorRow());
@@ -45,7 +45,7 @@ class TerminalBufferCursorTest {
 
     @Test
     void testMoveDownClampsToHeightMinusOne() {
-        buffer.setCursorPosition(10, 20);
+        buffer.setCursorPosition(20, 10);
         buffer.moveCursor(Direction.DOWN, 10); // would go beyond height, should clamp to HEIGHT-1
         assertEquals(HEIGHT - 1, buffer.getCursorRow());
         assertEquals(10, buffer.getCursorCol());

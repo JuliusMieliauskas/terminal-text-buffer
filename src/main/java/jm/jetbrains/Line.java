@@ -11,12 +11,27 @@ public class Line {
         }
     }
 
+    public void fillLineWithCharacters(char c, TextAttributes textAttributes) {
+        for(Cell cell : cells) {
+            cell.setCharacter(c);
+            cell.setAttributes(textAttributes);
+        }
+    }
+
     public Cell getCell(int index) {
         return cells[index];
     }
 
     public int getWidth() {
         return cells.length;
+    }
+
+    public String getLineContentsAsString() {
+        StringBuilder sb = new StringBuilder();
+        for (Cell cell : cells) {
+            sb.append(cell.getCharacter());
+        }
+        return sb.toString();
     }
 
 }

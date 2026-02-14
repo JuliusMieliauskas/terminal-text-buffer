@@ -31,7 +31,9 @@ public class TerminalBuffer {
         this.scrollback = new LinkedList<>();
         this.screen = new Line[height];
 
-        // TODO: Initialize the screen array with empty Lines
+        for (int i = 0; i < height; i++) {
+            screen[i] = new Line(width, currentAttributes);
+        }
     }
 
     // --- ATTRIBUTES ---
@@ -48,28 +50,47 @@ public class TerminalBuffer {
         return cursorRow;
     }
 
-    public void setCursorPosition(int col, int row) {
-        int newCol = Math.max(0, Math.min(col, width - 1));
+    public void setCursorPosition(int row, int col) {
         int newRow = Math.max(0, Math.min(row, height - 1));
-        this.cursorCol = newCol;
+        int newCol = Math.max(0, Math.min(col, width - 1));
         this.cursorRow = newRow;
+        this.cursorCol = newCol;
     }
 
     public void moveCursor(Direction direction, int n) {
-        int newCol = cursorCol;
         int newRow = cursorRow;
+        int newCol = cursorCol;
         switch (direction) {
             case UP -> newRow -= n;
             case DOWN -> newRow += n;
             case LEFT -> newCol -= n;
-            case RIGHT -> newCol += n;
+            case RIGHT -> newCol += n; // TODO: Maybe we should wrap it to new line ?? maybe not
         }
-        setCursorPosition(newCol, newRow);
+        setCursorPosition(newRow, newCol);
     }
 
     // --- EDITING ---
     public void writeText(String text) {
-        // TODO: Implement overwrite logic
+        for (char c : text.toCharArray()) {
+            Cell currentCell = screen[cursorRow].getCell(cursorCol);
+            currentCell.setCharacter(c);
+            currentCell.setAttributes(currentAttributes);
+
+            cursorCol++;
+
+            // Handle Wrapping
+            if (cursorCol >= width) {
+                cursorCol = 0;
+                cursorRow++;
+            }
+
+            // Handle Scrolling
+            if (cursorRow >= height) {
+                insertEmptyLineAtBottom();
+
+                cursorRow = height - 1;
+            }
+        }
     }
 
     public void insertText(String text) {
@@ -77,11 +98,24 @@ public class TerminalBuffer {
     }
 
     public void fillLine(char c) {
-        // TODO: Implement line filling
+        screen[cursorRow].fillLineWithCharacters(c, currentAttributes);
     }
 
     public void insertEmptyLineAtBottom() {
-        // TODO: Implement the "Shift Up" scroll logic
+        Line topRow = screen[0];
+
+        scrollback.addLast(topRow);
+
+        // Enforce the maximum scrollback size
+        while (scrollback.size() > maxScrollbackSize) {
+            scrollback.removeFirst(); // Drops the oldest line from history
+        }
+
+        // Shift the Screen Array Up
+        System.arraycopy(screen, 1, screen, 0, height - 1);
+
+        // Create the new bottom line
+        screen[height - 1] = new Line(width, currentAttributes);
     }
 
     public void clearScreen() {
@@ -93,5 +127,12 @@ public class TerminalBuffer {
     }
 
     // --- CONTENT ACCESS ---
-    // TODO
+    public String getScreenContents() {
+        StringBuilder sb = new StringBuilder();
+        for (Line line : screen) {
+            sb.append(line.getLineContentsAsString());
+        }
+        return sb.toString();
+    }
+
 }
