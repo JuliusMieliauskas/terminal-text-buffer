@@ -211,4 +211,65 @@ public class TerminalBuffer {
         return sb.toString();
     }
 
+    public String getScrollbackAndScreenContents() {
+        StringBuilder sb = new StringBuilder();
+        for (Line line : scrollback) {
+            sb.append(line.getLineContentsAsString());
+        }
+        for (Line line : screen) {
+            sb.append(line.getLineContentsAsString());
+        }
+        return sb.toString();
+    }
+
+    public char getCellCharacter(int row, int col) {
+        // If row is negative get from scrollback
+        // -1 is the first row (most recent) row in scrollback, -2 is the second most recent, etc.
+        if (row < 0) {
+            int scrollbackIndex = scrollback.size() + row;
+            if (scrollbackIndex < 0) {
+                throw new IndexOutOfBoundsException("Scrollback does not have that many lines");
+            }
+            Line scrollbackLine = ((LinkedList<Line>) scrollback).get(scrollbackIndex);
+            return scrollbackLine.getCell(col).getCharacter();
+        } else {
+            if (row >= height) {
+                throw new IndexOutOfBoundsException("Row exceeds screen height");
+            }
+            return screen[row].getCell(col).getCharacter();
+        }
+    }
+
+    public TextAttributes getCellAttributes(int row, int col) {
+        if (row < 0) {
+            int scrollbackIndex = scrollback.size() + row;
+            if (scrollbackIndex < 0) {
+                throw new IndexOutOfBoundsException("Scrollback does not have that many lines");
+            }
+            Line scrollbackLine = ((LinkedList<Line>) scrollback).get(scrollbackIndex);
+            return scrollbackLine.getCell(col).getAttributes();
+        } else {
+            if (row >= height) {
+                throw new IndexOutOfBoundsException("Row exceeds screen height");
+            }
+            return screen[row].getCell(col).getAttributes();
+        }
+    }
+
+    public String getLineContents(int row) {
+        if (row < 0) {
+            int scrollbackIndex = scrollback.size() + row;
+            if (scrollbackIndex < 0) {
+                throw new IndexOutOfBoundsException("Scrollback does not have that many lines");
+            }
+            Line scrollbackLine = ((LinkedList<Line>) scrollback).get(scrollbackIndex);
+            return scrollbackLine.getLineContentsAsString();
+        } else {
+            if (row >= height) {
+                throw new IndexOutOfBoundsException("Row exceeds screen height");
+            }
+            return screen[row].getLineContentsAsString();
+        }
+    }
+
 }
