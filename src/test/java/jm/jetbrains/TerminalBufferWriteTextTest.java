@@ -19,6 +19,16 @@ public class TerminalBufferWriteTextTest {
     }
 
     @Test
+    void testWriteFullScreenContents() {
+        String initialText = "abcd1234efgh5678";
+        buffer.writeText(initialText);
+
+        String contentsAfterFirstWrite = buffer.getScreenContents();
+        String expectedContents = "abcd1234efgh5678";
+        assertEquals(expectedContents, contentsAfterFirstWrite);
+    }
+
+    @Test
     void testCorrectTextWrite() {
         // 1. Move cursor down one line, and right one column
         // 2. Write some text

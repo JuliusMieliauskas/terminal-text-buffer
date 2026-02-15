@@ -22,6 +22,10 @@ public class Line {
         return cells[index];
     }
 
+    public void setCell(int index, Cell newCell) {
+        cells[index] = newCell;
+    }
+
     public int getWidth() {
         return cells.length;
     }

@@ -1,8 +1,6 @@
 package jm.jetbrains;
 
-import java.util.Deque;
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.*;
 
 public class TerminalBuffer {
 
@@ -72,12 +70,6 @@ public class TerminalBuffer {
     // --- EDITING ---
     public void writeText(String text) {
         for (char c : text.toCharArray()) {
-            Cell currentCell = screen[cursorRow].getCell(cursorCol);
-            currentCell.setCharacter(c);
-            currentCell.setAttributes(currentAttributes);
-
-            cursorCol++;
-
             // Handle Wrapping
             if (cursorCol >= width) {
                 cursorCol = 0;
@@ -90,11 +82,95 @@ public class TerminalBuffer {
 
                 cursorRow = height - 1;
             }
+
+            Cell currentCell = screen[cursorRow].getCell(cursorCol);
+            currentCell.setCharacter(c);
+            currentCell.setAttributes(currentAttributes);
+
+            cursorCol++;
         }
     }
 
     public void insertText(String text) {
-        // TODO: Implement insertion and wrapping logic
+        // Logic: maintain "carry" array which represents the characters which need to be inserted
+        // Update this array with characters which do not fit into current line and insert them to start of next line.
+        // Propagate those lines until we have fully processed all the text and added new lines if required
+        List<Cell> carry = new ArrayList<>();
+        for (char c : text.toCharArray()) {
+            carry.add(new Cell(c, currentAttributes));
+        }
+
+        // Start the cascade at the current cursor row
+        int currentRow = cursorRow;
+        int insertCol = cursorCol;
+
+        // Loop until there is no more carry or we run out of screen
+        while (!carry.isEmpty() && currentRow < height) {
+            // Perform the insertion on the specific line
+            List<Cell> newOverflow = insertCellsIntoRow(currentRow, insertCol, carry);
+
+            carry = newOverflow;
+            currentRow++;
+            insertCol = 0; // All subsequent wraps insert at the START of the line
+        }
+
+        // If we still have overflow after reaching the bottom, we must scroll
+        while (!carry.isEmpty()) {
+            insertEmptyLineAtBottom();
+
+            List<Cell> newOverflow = insertCellsIntoRow(height - 1, 0, carry);
+            carry = newOverflow;
+        }
+
+        // Update cursor positions
+        int totalAdvance = cursorCol + text.length();
+        int newRow = cursorRow + (totalAdvance / width);
+        int newCol = totalAdvance % width;
+        setCursorPosition(newRow, newCol);
+    }
+
+    private List<Cell> insertCellsIntoRow(int row, int startCol, List<Cell> toInsert) {
+        Line line = screen[row];
+        int insertCount = toInsert.size();
+
+        List<Cell> overflow = new ArrayList<>();
+
+        Cell[] tempBuffer = new Cell[width + insertCount];
+
+        // Copy part 1: Start of line up to insert position
+        for (int i = 0; i < startCol; i++) {
+            tempBuffer[i] = line.getCell(i);
+        }
+
+        // Copy part 2: The new text
+        for (int i = 0; i < insertCount; i++) {
+            tempBuffer[startCol + i] = toInsert.get(i);
+        }
+
+        // Copy part 3: The existing text that gets shifted
+        for (int i = startCol; i < width; i++) {
+            tempBuffer[i + insertCount] = line.getCell(i);
+        }
+
+        for (int i = 0; i < width; i++) {
+            line.setCell(i, new Cell(tempBuffer[i].getCharacter(), tempBuffer[i].getAttributes()));
+        }
+
+        // Collect the rest into overflow list, trimming trailing empty cells
+        int lastNonEmptyIndex = -1;
+        for (int i = width; i < tempBuffer.length; i++) {
+            if (tempBuffer[i].getCharacter() != ' ') {
+                lastNonEmptyIndex = i;
+            }
+        }
+        if (lastNonEmptyIndex == -1) {
+            return overflow;
+        }
+        for (int i = width; i <= lastNonEmptyIndex; i++) {
+            overflow.add(tempBuffer[i]);
+        }
+
+        return overflow;
     }
 
     public void fillLine(char c) {
