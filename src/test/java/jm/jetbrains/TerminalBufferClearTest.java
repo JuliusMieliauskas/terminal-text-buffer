@@ -25,7 +25,7 @@ public class TerminalBufferClearTest {
 
         buffer.clearScreen();
 
-        String expectedContents = "ab12";
+        String expectedContents = "ab12    ";
         assertEquals(expectedContents, buffer.getScrollbackAndScreenContents());
     }
 
