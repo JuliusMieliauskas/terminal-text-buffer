@@ -195,11 +195,14 @@ public class TerminalBuffer {
     }
 
     public void clearScreen() {
-        // TODO: Clear active screen
+        for (Line line : screen) {
+            line.fillLineWithCharacters(' ', currentAttributes);
+        }
     }
 
     public void clearScreenAndScrollback() {
-        // TODO: Clear both
+        clearScreen();
+        scrollback.clear();
     }
 
     // --- CONTENT ACCESS ---
