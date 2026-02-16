@@ -45,4 +45,4 @@ mvn test
 
 ### 7. Bonus Features (Optional)
 - [ ] **Wide Characters**: Support for CJK ideographs/Emoji (occupying 2 columns).
-- [ ] **Resize Strategy**: Logic to handle resizing the screen dimensions (reflowing text or cropping).
+- [ ] **Resize Strategy**: Logic to handle resizing the screen dimensions (reflowing text or cropping). *Partially Implemented*

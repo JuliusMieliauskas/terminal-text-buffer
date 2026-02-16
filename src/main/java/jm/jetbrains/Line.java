@@ -1,5 +1,8 @@
 package jm.jetbrains;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class Line {
     private final Cell[] cells;
 
@@ -20,6 +23,10 @@ public class Line {
 
     public Cell getCell(int index) {
         return cells[index];
+    }
+
+    public List<Cell> getCells() {
+        return Arrays.asList(cells);
     }
 
     public void setCell(int index, Cell newCell) {

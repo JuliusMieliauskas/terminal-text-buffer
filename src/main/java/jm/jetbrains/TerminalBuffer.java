@@ -214,6 +214,14 @@ public class TerminalBuffer {
         return sb.toString();
     }
 
+    public String getScrollbackContents() {
+        StringBuilder sb = new StringBuilder();
+        for (Line line : scrollback) {
+            sb.append(line.getLineContentsAsString());
+        }
+        return sb.toString();
+    }
+
     public String getScrollbackAndScreenContents() {
         StringBuilder sb = new StringBuilder();
         for (Line line : scrollback) {
@@ -272,6 +280,100 @@ public class TerminalBuffer {
                 throw new IndexOutOfBoundsException("Row exceeds screen height");
             }
             return screen[row].getLineContentsAsString();
+        }
+    }
+
+    // Resizing Logic
+    public void setMaxColumns(int newWidth) {
+        if (newWidth == width) {
+            return; // No change
+        }
+
+        if (newWidth < width) { // shrinking
+
+            // 1. Get contents of the whole screen as an array of cells to preserve both the text and attributes
+            // 2. Limit the contents to length of newWidth * height
+            // 3. Clear the screen, and populate it with new resized lines
+            // 4. Get scrollback content
+            // 5. Join scrollback content with any overflow content from original screen
+            // 6. Recreate scrollback with new line size and corresponding content (trimming old lines if we exceed max scrollback size)
+
+            List<Cell> allCells = new ArrayList<>();
+            for (Line line : screen) {
+                allCells.addAll(line.getCells());
+            }
+
+            int lastNonEmptyIndex = -1;
+            for (int i = allCells.size() - 1; i >= 0; i--) {
+                if (allCells.get(i).getCharacter() != ' ') {
+                    lastNonEmptyIndex = i;
+                    break;
+                }
+            }
+            if (lastNonEmptyIndex == -1) {
+                lastNonEmptyIndex = 0;
+            }
+            int startIndex = Math.max(0, lastNonEmptyIndex - newWidth * height + 1);
+            List<Cell> limitedCells = allCells.subList(startIndex, allCells.size());
+
+            for (int i = 0; i < height; i++) {
+                screen[i] = new Line(newWidth, currentAttributes);
+                for (int j = 0; j < newWidth; j++) {
+                    int cellIndex = i * newWidth + j;
+                    if (cellIndex < limitedCells.size()) {
+                        Cell cellToCopy = limitedCells.get(cellIndex);
+                        screen[i].setCell(j, new Cell(cellToCopy.getCharacter(), cellToCopy.getAttributes()));
+                    } else {
+                        screen[i].setCell(j, new Cell(' ', currentAttributes));
+                    }
+                }
+            }
+
+            // Get scrollback content and join with overflow from original screen
+            List<Cell> newScrollbackCells = new ArrayList<>();
+            for (Line line : scrollback) {
+                newScrollbackCells.addAll(line.getCells());
+            }
+            for (int i = 0; i < Math.max(0, lastNonEmptyIndex - newWidth * height + 1); i++) {
+                newScrollbackCells.add(allCells.get(i));
+            }
+
+            // Limit the scrollback content to maxScrollbackSize * newWidth
+            int maxScrollbackCells = maxScrollbackSize * newWidth;
+            if (newScrollbackCells.size() > maxScrollbackCells) {
+                newScrollbackCells = newScrollbackCells.subList(newScrollbackCells.size() - maxScrollbackCells, newScrollbackCells.size());
+            }
+
+            // If the new scrollback is smaller then max allowed scrollback size, prepend with empty cells to maintain the correct number of lines in scrollback
+            int requiredCells = maxScrollbackSize * newWidth;
+            if (newScrollbackCells.size() < requiredCells) {
+                List<Cell> paddingCells = new ArrayList<>();
+                for (int i = 0; i < requiredCells - newScrollbackCells.size(); i++) {
+                    paddingCells.add(new Cell(' ', currentAttributes));
+                }
+                paddingCells.addAll(newScrollbackCells);
+                newScrollbackCells = paddingCells;
+            }
+
+            // Recreate scrollback with new line size
+            scrollback.clear();
+            for (int i = 0; i < newScrollbackCells.size(); i += newWidth) {
+                Line newLine = new Line(newWidth, currentAttributes);
+                for (int j = 0; j < newWidth; j++) {
+                    int cellIndex = i + j;
+                    if (cellIndex < newScrollbackCells.size()) {
+                        Cell cellToCopy = newScrollbackCells.get(cellIndex);
+                        newLine.setCell(j, new Cell(cellToCopy.getCharacter(), cellToCopy.getAttributes()));
+                    }
+                }
+                scrollback.addLast(newLine);
+            }
+
+            // Set cursor to (0, 0)
+            setCursorPosition(0, 0); // TODO: calculate where would the cursor end up in the new screen
+
+        } else { // expanding
+            // TODO
         }
     }
 
