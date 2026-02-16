@@ -38,4 +38,24 @@ public class TerminalBufferInsertTextTest {
         assertEquals(3, buffer.getCursorCol());
     }
 
+    @Test
+    void testInsertTextWithoutNewLineCreation() {
+        String initialText = "abcd1234efgh567";
+        buffer.writeText(initialText);
+
+        buffer.setCursorPosition(1, 1);
+
+        buffer.insertText("X");
+
+        // We expect the text to shift and create a new line
+        String expectedContents = "abcd1X234efgh567";
+
+        String contentsAfterFirstWrite = buffer.getScreenContents();
+        assertEquals(expectedContents, contentsAfterFirstWrite);
+
+        // Assert Cursor is at the very end of the inserted text
+        assertEquals(1, buffer.getCursorRow());
+        assertEquals(2, buffer.getCursorCol());
+    }
+
 }

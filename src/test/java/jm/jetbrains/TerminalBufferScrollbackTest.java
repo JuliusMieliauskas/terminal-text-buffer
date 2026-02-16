@@ -33,4 +33,20 @@ public class TerminalBufferScrollbackTest {
         assertEquals("12", mostRecentScrollbackLine);
         assertEquals("ab", leastRecentScrollbackLine);
     }
+
+    @Test
+    void testScrollbackFull() {
+        String initialText = "ab12cd34ef";
+        buffer.writeText(initialText);
+
+        String expectedScreenContents = "34ef";
+
+        String screenContents = buffer.getScreenContents();
+        assertEquals(expectedScreenContents, screenContents);
+
+        String mostRecentScrollbackLine = buffer.getLineContents(-1);
+        String leastRecentScrollbackLine = buffer.getLineContents(-2);
+        assertEquals("cd", mostRecentScrollbackLine);
+        assertEquals("12", leastRecentScrollbackLine);
+    }
 }
